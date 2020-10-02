@@ -171,6 +171,19 @@ contract MyStream is SafeMath{
         address indexed companyAccount, 
         uint256 companyAmout
     );
+
+    event TranferRecipientFromCancelStream(
+        uint256 indexed streamId, 
+        address indexed recipient, 
+        uint256 clientAmount
+    );
+
+    event TranferSenderFromCancelStream(
+        uint256 indexed streamId, 
+        address indexed sender, 
+        uint256 senderBalance
+
+    );
     
     // Functions public TODO add pause
     
@@ -259,13 +272,23 @@ contract MyStream is SafeMath{
         Stream memory stream = streams[streamId];
         uint256 senderBalance = balanceOf(streamId, stream.sender);
         uint256 recipientBalance = balanceOf(streamId, stream.recipient);
+        uint256 companyAmount  = div(mul(recipientBalance, fee), 100);
+        uint256 clientAmount  = sub(recipientBalance, companyAmount);
 
         delete streams[streamId];
 
         IERC20 token = IERC20(stream.tokenAddress);
-        if (recipientBalance > 0)
-            require(token.transfer(stream.recipient, recipientBalance), "recipient token transfer failure");
-        if (senderBalance > 0) require(token.transfer(stream.sender, senderBalance), "sender token transfer failure");
+            if (recipientBalance > 0){
+                require(token.transfer(stream.recipient, clientAmount), "recipient token transfer failure");
+                require(token.transfer(stream.recipient, companyAmount), "company token transfer failure");
+                emit TranferRecipientFromCancelStream(streamId, stream.recipient, clientAmount);
+                emit FeeFromStream(streamId, companyAccount, companyAmount);
+
+            }
+            if (senderBalance > 0){
+                require(token.transfer(stream.sender, senderBalance), "sender token transfer failure");
+                emit TranferSenderFromCancelStream(streamId, stream.sender, senderBalance);
+            }
 
         emit CancelStream(streamId, stream.sender, stream.recipient, senderBalance, recipientBalance);
     }
