@@ -1,3 +1,16 @@
+ 
+/**
+   Tis contract based on:
+
+   Fork of OpenZeppelin's contracts
+
+   @title ERC-1620 Money Streaming Standard
+   @author Paul Razvan Berg - <paul@sablier.app>
+   @dev See https://eips.ethereum.org/EIPS/eip-1620
+
+   Fork https://github.com/sablierhq/sablier
+**/
+
 pragma solidity 0.5.11;
 
 interface IERC20 {
