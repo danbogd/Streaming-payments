@@ -1,16 +1,3 @@
- 
-/**
-   Tis contract based on:
-
-   Fork of OpenZeppelin's contracts
-
-   @title ERC-1620 Money Streaming Standard
-   @author Paul Razvan Berg - <paul@sablier.app>
-   @dev See https://eips.ethereum.org/EIPS/eip-1620
-
-   Fork https://github.com/sablierhq/sablier
-**/
-
 pragma solidity 0.5.11;
 
 interface IERC20 {
@@ -312,13 +299,18 @@ contract MyStream is SafeMath{
         return 0;
     }
     
-    
     function deltaOf(uint256 streamId) public view streamExists(streamId) returns (uint256 delta) {
         Stream memory stream = streams[streamId];
+        
         if (block.timestamp <= stream.startTime) return 0;
+        
         if (block.timestamp < stream.stopTime) return block.timestamp - stream.startTime;
+        
         return stream.stopTime - stream.startTime;
     }
+    
+    
+    
     
     function withdrawFromStream(uint256 streamId, uint256 amount)
         external
@@ -333,7 +325,6 @@ contract MyStream is SafeMath{
         
         require(balance >= amount, "amount exceeds the available balance");
 
-        
         withdrawFromStreamInternal(streamId, amount);
         
         return true;
@@ -347,17 +338,20 @@ contract MyStream is SafeMath{
 
         if (streams[streamId].remainingBalance == 0) delete streams[streamId];
         
-        //uint256 companyAmout  = div(mul(amount, fee), 100);
+        uint256 companyAmount  = div(mul(amount, fee), 100);
         
-        //uint256 clientAmout  = sub(amount, companyAmout);
+        uint256 clientAmount  = sub(amount, companyAmount);
         
     
-        require(IERC20(stream.tokenAddress).transfer(stream.recipient, amount), "token transfer failure");
-       // require(IERC20(stream.tokenAddress).transfer(companyAccount, companyAmout), "fee transfer failure");
+        require(IERC20(stream.tokenAddress).transfer(stream.recipient, clientAmount), "token transfer failure");
+        require(IERC20(stream.tokenAddress).transfer(companyAccount, companyAmount), "fee transfer failure");
         
-        emit WithdrawFromStream(streamId, stream.recipient, amount);
-       // emit FeeFromStream(streamId, companyAccount, companyAmout);
+        emit WithdrawFromStream(streamId, stream.recipient, clientAmount);
+        emit FeeFromStream(streamId, companyAccount, companyAmount);
     }
+    
+    
+    
     // TODO onlyOwner Events
     function changeFee(uint _fee) public {
         require(_fee <= 50, "fee percentage higher than 50%");
