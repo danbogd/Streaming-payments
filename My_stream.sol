@@ -68,6 +68,71 @@ contract SafeMath{
     
 }
 
+contract Context {
+    // Empty internal constructor, to prevent people from mistakenly deploying
+    // an instance of this contract, with should be used via inheritance.
+    constructor () internal { }
+    // solhint-disable-previous-line no-empty-blocks
+
+    function _msgSender() internal view returns (address) {
+        return msg.sender;
+    }
+
+    function _msgData() internal view returns (bytes memory) {
+        this; // silence state mutability warning without generating bytecode - see https://github.com/ethereum/solidity/issues/2691
+        return msg.data;
+    }
+}
+
+contract Ownable is  Context {
+    address private _owner;
+
+    event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+
+    
+    function initialize(address sender) public initializer {
+        _owner = sender;
+        emit OwnershipTransferred(address(0), _owner);
+    }
+
+    
+    function owner() public view returns (address) {
+        return _owner;
+    }
+
+    
+    modifier onlyOwner() {
+        require(isOwner());
+        _;
+    }
+
+    /**
+     * @return true if `msg.sender` is the owner of the contract.
+     */
+    function isOwner() public view returns (bool) {
+        return _msgSender() == _owner;
+    }
+
+    /**
+     * @dev Allows the current owner to transfer control of the contract to a newOwner.
+     * @param newOwner The address to transfer ownership to.
+     */
+    function transferOwnership(address newOwner) public onlyOwner {
+        _transferOwnership(newOwner);
+    }
+
+    
+    function _transferOwnership(address newOwner) internal {
+        require(newOwner != address(0));
+         _owner = newOwner;
+        emit OwnershipTransferred(_owner, newOwner);
+       
+    }
+
+    
+}
+
+
 
 contract MyStream is SafeMath{
     
@@ -384,13 +449,13 @@ contract MyStream is SafeMath{
     
     
     // TODO onlyOwner Events
-    function changeFee(uint256 _fee) external {
+    function changeFee(uint256 _fee) external onlyOwner {
         require(_fee <= 50, "fee percentage higher than 50%");
         fee = _fee;
         emit newFee(fee);
     }
     
-    function changeCompanyAccount(address _companyAccount) external {
+    function changeCompanyAccount(address _companyAccount) external onlyOwner{
         require(_companyAccount != address(0x00), "companyAccount is zero address");
         companyAccount = _companyAccount;
         emit newCompanyAccount(companyAccount);
