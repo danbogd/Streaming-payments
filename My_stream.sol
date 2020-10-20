@@ -185,6 +185,14 @@ contract MyStream is SafeMath{
 
     );
     
+    event newFee(
+        uint256 newFee
+    );
+    
+    event newCompanyAccount(
+        address companyAccount
+    );
+    
     // Functions public TODO add pause
     
     function createStream(address recipient, uint256 deposit, address tokenAddress, uint256 startTime, uint256 stopTime) public  returns (uint256){
@@ -376,13 +384,15 @@ contract MyStream is SafeMath{
     
     
     // TODO onlyOwner Events
-    function changeFee(uint _fee) public {
+    function changeFee(uint256 _fee) external {
         require(_fee <= 50, "fee percentage higher than 50%");
         fee = _fee;
+        emit newFee(fee);
     }
     
-    function changeCompanyAccount(address _companyAccount) public {
+    function changeCompanyAccount(address _companyAccount) external {
         require(_companyAccount != address(0x00), "companyAccount is zero address");
         companyAccount = _companyAccount;
+        emit newCompanyAccount(companyAccount);
     }
 }
