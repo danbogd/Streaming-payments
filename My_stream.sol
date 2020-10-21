@@ -228,7 +228,7 @@ contract Pausable is PauserRole {
      * to the deployer.
      */
     function initialize(address sender) public initializer {
-        PauserRoleWithoutRenounce.initialize(sender);
+        PauserRole.initialize(sender);
         _paused = false;
     }
 
