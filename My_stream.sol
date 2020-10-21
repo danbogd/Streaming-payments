@@ -1,5 +1,6 @@
 pragma solidity 0.5.11;
 
+// contract addrees in Rinkeby 
 // интерфейс
 
 interface IERC20 {
@@ -331,8 +332,8 @@ contract MyStream is SafeMath, Pausable{
     
      constructor() public {
         //require(cTokenManagerAddress != address(0x00), "cTokenManager contract is the zero address");
-        //OwnableWithoutRenounce.initialize(msg.sender);
-        //PausableWithoutRenounce.initialize(msg.sender);
+        Ownable.initialize(msg.sender);
+        Pausable.initialize(msg.sender);
         //cTokenManager = ICTokenManager(cTokenManagerAddress);
         fee = 5;
         nextStreamId = 1;
