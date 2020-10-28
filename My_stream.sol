@@ -1,6 +1,6 @@
 pragma solidity 0.5.11;
 
-// contract addrees in Rinkeby 
+// contract addrees in Rinkeby 0xCD8AC5fAE0Fdc49DDC12d60511A86DD41CcAa654 
 // интерфейс
 
 interface IERC20 {
@@ -183,17 +183,19 @@ contract Emergency is Ownable{
   mapping(address => bool) internal signed;
 
   constructor() public {
-    require (one != address(0) && resone != address(0), "zero address");
-    require (two != address(0) && restwo != address(0), "zero address");
-    require (three != address(0) && resthree != address(0), "zero address");
+    
     
     one = 0x67FeE44bD5dbBAC0A9e04CcB9665077ef86303fC;
     two = 0xfdDA5b712Ae3431E0342c7686100dCF8BeE601E9;
     three = 0x7c484df5B910FE40473529F44C078aA41d794bb6;
 
-    resone = 0x0000000000000000000000000000000000000011;
-    restwo = 0x0000000000000000000000000000000000000022;
-    resthree = 0x0000000000000000000000000000000000000033;  
+    resone = 0x67FeE44bD5dbBAC0A9e04CcB9665077ef86303fC;
+    restwo = 0xfdDA5b712Ae3431E0342c7686100dCF8BeE601E9;
+    resthree = 0x7c484df5B910FE40473529F44C078aA41d794bb6; 
+    
+    require (one != address(0) && resone != address(0), "zero address");
+    require (two != address(0) && restwo != address(0), "zero address");
+    require (three != address(0) && resthree != address(0), "zero address");
   }
 
   function Sign60() public {
