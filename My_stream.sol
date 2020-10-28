@@ -170,8 +170,75 @@ contract Ownable is Context  {
     
 }
 
+contract Emergency is Ownable{
+
+  address public one;
+  address public two;
+  address public three;
+  address public resone;
+  address public restwo;
+  address public resthree;
+
+
+  mapping(address => bool) internal signed;
+
+  constructor() public {
+    require (one != address(0) && resone != address(0), "zero address");
+    require (two != address(0) && restwo != address(0), "zero address");
+    require (three != address(0) && resthree != address(0), "zero address");
+    
+    // Rinkeby addresses for test
+    one = 0x67FeE44bD5dbBAC0A9e04CcB9665077ef86303fC;
+    two = 0xfdDA5b712Ae3431E0342c7686100dCF8BeE601E9;
+    three = 0x7c484df5B910FE40473529F44C078aA41d794bb6;
+
+    resone = 0x0000000000000000000000000000000000000011;
+    restwo = 0x0000000000000000000000000000000000000022;
+    resthree = 0x0000000000000000000000000000000000000033;  
+  }
+
+  function Sign60() public {
+    require (msg.sender == one || msg.sender == resone);
+    require (signed[msg.sender] == false);
+    signed[msg.sender] = true;
+  }
+
+  function Sign45() public {
+    require (msg.sender == two || msg.sender == restwo);
+    require (signed[msg.sender] == false);
+    signed[msg.sender] = true;
+  }
+
+  function Sign15() public {
+    require (msg.sender == three || msg.sender == resthree);
+    require (signed[msg.sender] == false);
+    signed[msg.sender] = true;
+  }
+  
+  function CheckSign(address _user) external view returns (bool){
+      return signed[_user];
+  }
+
+  modifier MultiOwners {
+    require (signed[one] == true || signed[resone] == true);
+    require (signed[two] == true || signed[restwo] == true);
+    require (signed[three] == true || signed[resthree] == true);
+    _;  
+  }
+
+  function Back() internal{
+
+    signed[one] = false;
+    signed[two] = false;
+    signed[three] = false;
+    signed[resone] = false;
+    signed[restwo] = false;
+    signed[resthree] = false;
+  }
+}
+
 // пауза от ownable
-contract PauserRole is Ownable {
+contract PauserRole is Emergency {
     using Roles for Roles.Role;
 
     event PauserAdded(address indexed account);
@@ -424,10 +491,22 @@ contract MyStream is SafeMath, Pausable{
         uint256 amount
     );
     
-    event FeeFromStream(
+    event FeeFromStream60(
         uint256 indexed streamId, 
         address indexed companyAccount, 
-        uint256 companyAmout
+        uint256 fee60
+    );
+    
+    event FeeFromStream25(
+        uint256 indexed streamId, 
+        address indexed companyAccount, 
+        uint256 fee25
+    );
+    
+    event FeeFromStream15(
+        uint256 indexed streamId, 
+        address indexed companyAccount, 
+        uint256 fee_5
     );
 
     event TranferRecipientFromCancelStream(
@@ -546,9 +625,9 @@ contract MyStream is SafeMath, Pausable{
         IERC20 token = IERC20(stream.tokenAddress);
             if (recipientBalance > 0){
                 require(token.transfer(stream.recipient, clientAmount), "recipient token transfer failure");
-                require(token.transfer(stream.recipient, companyAmount), "company token transfer failure");
+                //require(token.transfer(stream.recipient, companyAmount), "company token transfer failure");
                 emit TranferRecipientFromCancelStream(streamId, stream.recipient, clientAmount);
-                emit FeeFromStream(streamId, companyAccount, companyAmount);
+                //emit FeeFromStream(streamId, companyAccount, companyAmount);
 
             }
             if (senderBalance > 0){
@@ -631,26 +710,38 @@ contract MyStream is SafeMath, Pausable{
         
         uint256 clientAmount  = sub(amount, companyAmount);
         
+        // distribution to the shareholders
+        uint256 fee60 = div(mul(clientAmount, 60),100);
+        uint256 fee25 = div(mul(clientAmount, 25),100);
+        uint256 fee15 = div(mul(clientAmount, 15),100);
     
         require(IERC20(stream.tokenAddress).transfer(stream.recipient, clientAmount), "token transfer failure");
-        require(IERC20(stream.tokenAddress).transfer(companyAccount, companyAmount), "fee transfer failure");
+        require(IERC20(stream.tokenAddress).transfer(one, fee60), "fee transfer failure");
+        require(IERC20(stream.tokenAddress).transfer(two, fee25), "fee transfer failure");
+        require(IERC20(stream.tokenAddress).transfer(three, fee15), "fee transfer failure");
+        
+        
         
         emit WithdrawFromStream(streamId, stream.recipient, clientAmount);
-        emit FeeFromStream(streamId, companyAccount, companyAmount);
+        emit FeeFromStream60(streamId, companyAccount, fee60);
+        emit FeeFromStream25(streamId, companyAccount, fee25);
+        emit FeeFromStream15(streamId, companyAccount, fee15);
+        
     }
     
     
     
-    // TODO onlyOwner Events
-    function changeFee(uint256 _fee) external onlyOwner {
+    // TODO change address for second one
+    function changeFee(uint256 _fee) external MultiOwners {
         require(_fee <= 50, "fee percentage higher than 50%");
         fee = _fee;
+        Back();
         emit newFee(fee);
     }
     
-    function changeCompanyAccount(address _companyAccount) external onlyOwner{
-        require(_companyAccount != address(0x00), "companyAccount is zero address");  // adress(0)
-        companyAccount = _companyAccount;
-        emit newCompanyAccount(companyAccount);
-    }
+    // function changeCompanyAccount(address _companyAccount) external MultiOwners{
+    //     require(_companyAccount != address(0x00), "companyAccount is zero address");  // adress(0)
+    //     companyAccount = _companyAccount;
+    //     emit newCompanyAccount(companyAccount);
+    // }
 }
