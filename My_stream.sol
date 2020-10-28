@@ -187,7 +187,6 @@ contract Emergency is Ownable{
     require (two != address(0) && restwo != address(0), "zero address");
     require (three != address(0) && resthree != address(0), "zero address");
     
-    // Rinkeby addresses for test
     one = 0x67FeE44bD5dbBAC0A9e04CcB9665077ef86303fC;
     two = 0xfdDA5b712Ae3431E0342c7686100dCF8BeE601E9;
     three = 0x7c484df5B910FE40473529F44C078aA41d794bb6;
@@ -410,7 +409,7 @@ contract MyStream is SafeMath, Pausable{
     
     uint256 public nextStreamId;
     uint256 public fee = 5;
-    address public companyAccount = 0x4a701E81c114c9885EE814a41EabBBE6B02D3440;
+    
     
     //Mappings
     
@@ -716,16 +715,16 @@ contract MyStream is SafeMath, Pausable{
         uint256 fee15 = div(mul(clientAmount, 15),100);
     
         require(IERC20(stream.tokenAddress).transfer(stream.recipient, clientAmount), "token transfer failure");
-        require(IERC20(stream.tokenAddress).transfer(one, fee60), "fee transfer failure");
-        require(IERC20(stream.tokenAddress).transfer(two, fee25), "fee transfer failure");
-        require(IERC20(stream.tokenAddress).transfer(three, fee15), "fee transfer failure");
+        require(IERC20(stream.tokenAddress).transfer(one, fee60), "fee60 transfer failure");
+        require(IERC20(stream.tokenAddress).transfer(two, fee25), "fee25 transfer failure");
+        require(IERC20(stream.tokenAddress).transfer(three, fee15), "fee15 transfer failure");
         
         
         
         emit WithdrawFromStream(streamId, stream.recipient, clientAmount);
-        emit FeeFromStream60(streamId, companyAccount, fee60);
-        emit FeeFromStream25(streamId, companyAccount, fee25);
-        emit FeeFromStream15(streamId, companyAccount, fee15);
+        emit FeeFromStream60(streamId, one, fee60);
+        emit FeeFromStream25(streamId, two, fee25);
+        emit FeeFromStream15(streamId, three, fee15);
         
     }
     
