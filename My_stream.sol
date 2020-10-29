@@ -201,13 +201,14 @@ contract Emergency is Ownable{
 
   constructor() public {
     
-    require (one != address(0) && resone != address(0), "zero address");
-    require (two != address(0) && restwo != address(0), "zero address");
-    require (three != address(0) && resthree != address(0), "zero address");
     
     one = 0x67FeE44bD5dbBAC0A9e04CcB9665077ef86303fC;
     two = 0xfdDA5b712Ae3431E0342c7686100dCF8BeE601E9;
     three = 0x7c484df5B910FE40473529F44C078aA41d794bb6;
+    
+    require (one != address(0));
+    require (two != address(0));
+    require (three != address(0));
   }
 
   function Sign60() public {
@@ -233,9 +234,9 @@ contract Emergency is Ownable{
   }
 
   modifier MultiOwners {
-    require (signed[one] == true || signed[resone] == true);
-    require (signed[two] == true || signed[restwo] == true);
-    require (signed[three] == true || signed[resthree] == true);
+    require (signed[one] == true);
+    require (signed[two] == true);
+    require (signed[three] == true);
     _;  
   }
 
@@ -258,7 +259,7 @@ contract PauserRole is Emergency {
     event PauserRemoved(address indexed account);
 
     Roles.Role private _pausers;
-/////////////////////////////////////////////////////////////////////////////////////
+
     constructor () public  {
         if (!isPauser(msg.sender)) {
             _addPauser(msg.sender);
@@ -304,12 +305,9 @@ contract Pausable is PauserRole {
 
     bool private _paused;
 
-    /**
-     * @dev Initializes the contract in unpaused state. Assigns the Pauser role
-     * to the deployer.
-     */
-    constructor() public  {
-        PauserRole(msg.sender);
+    
+    constructor() internal  {
+        
         _paused = false;
     }
 
@@ -408,7 +406,10 @@ contract SafeMath{
 
 
 contract MyStream is SafeMath, Pausable{
+    // Variables
     
+    uint256 public nextStreamId;
+    uint256 public fee;
     
      constructor() public {
         //require(cTokenManagerAddress != address(0x00), "cTokenManager contract is the zero address");
@@ -418,10 +419,6 @@ contract MyStream is SafeMath, Pausable{
         nextStreamId = 1;
     }
     
-    // Variables
-    
-    uint256 public nextStreamId;
-    uint256 public fee = 5;
     
     
     //Mappings
@@ -544,7 +541,7 @@ contract MyStream is SafeMath, Pausable{
     
     // Functions public TODO add pause
     
-    function createStream(address recipient, uint256 deposit, address tokenAddress, uint256 startTime, uint256 stopTime) public  returns (uint256){
+    function createStream(address recipient, uint256 deposit, address tokenAddress, uint256 startTime, uint256 stopTime) public  whenNotPaused returns (uint256) {
         
         require(recipient != address(0x00), "stream to the zero address");
         require(recipient != address(this), "stream to the contract itself");
@@ -624,31 +621,21 @@ contract MyStream is SafeMath, Pausable{
         return true;
     }
     
-    
     function cancelStreamInternal(uint256 streamId) internal {
         Stream memory stream = streams[streamId];
         uint256 senderBalance = balanceOf(streamId, stream.sender);
         uint256 recipientBalance = balanceOf(streamId, stream.recipient);
-        uint256 companyAmount  = div(mul(recipientBalance, fee), 100);
-        uint256 clientAmount  = sub(recipientBalance, companyAmount);
 
         delete streams[streamId];
 
         IERC20 token = IERC20(stream.tokenAddress);
-            if (recipientBalance > 0){
-                require(token.transfer(stream.recipient, clientAmount), "recipient token transfer failure");
-                //require(token.transfer(stream.recipient, companyAmount), "company token transfer failure");
-                emit TranferRecipientFromCancelStream(streamId, stream.recipient, clientAmount);
-                //emit FeeFromStream(streamId, companyAccount, companyAmount);
-
-            }
-            if (senderBalance > 0){
-                require(token.transfer(stream.sender, senderBalance), "sender token transfer failure");
-                emit TranferSenderFromCancelStream(streamId, stream.sender, senderBalance);
-            }
+        if (recipientBalance > 0)
+            require(token.transfer(stream.recipient, recipientBalance), "recipient token transfer failure");
+        if (senderBalance > 0) require(token.transfer(stream.sender, senderBalance), "sender token transfer failure");
 
         emit CancelStream(streamId, stream.sender, stream.recipient, senderBalance, recipientBalance);
     }
+    
     
     function balanceOf(uint256 streamId, address who) public view streamExists(streamId) returns (uint256 balance) {
         Stream memory stream = streams[streamId];
@@ -694,7 +681,7 @@ contract MyStream is SafeMath, Pausable{
     
     function withdrawFromStream(uint256 streamId, uint256 amount)
         external
-        //whenNotPaused
+        
         streamExists(streamId)
         onlySenderOrRecipient(streamId)
         returns (bool)
